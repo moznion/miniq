@@ -46,6 +46,8 @@ The point is this `do()` returns the `Promise<void>` so the client code cannot g
 but you can use `async Task#getResult(): Promise<T>` to take that.
 So the basic usage should be enqueuing a task and waiting for the result by `await getResult()` for the task.
 
+Please see also [typedoc](https://moznion.github.io/miniq/).
+
 ### TTL
 
 You can give a task the TTL like:
@@ -55,6 +57,10 @@ const task = await Task.make<string>(async (): Promise<string> => {
   return 'foo';
 }, Date.now() + 60000);
 // ~~~~~~~~~~~~~~~~~~ TTL that represents 60 secs from now
+
+...
+
+await task.getResult(); // if the TTL has exceeded, it rejects this task and throws `TaskTTLExceededError`.
 ```
 
 And a task that has the TTL has been enqueued and when the task runner takes the task to run, if the TTL exceeds

@@ -1,7 +1,20 @@
+/**
+ * QueueTaskRunner is the queue-based task runner.
+ *
+ * This runs the tasks in a queue like FIFO.
+ */
 export class QueueTaskRunner<T> {
   private queuedTasks: Task<T>[] = [];
   private isRunning = false;
 
+  /**
+   * enqueue enqueues a task to run.
+   *
+   * If the task runner hasn't started (i.e. given task is the first one in a queue),
+   * this also starts the task runner.
+   *
+   * @param task
+   */
   enqueue(task: Task<T>): void {
     this.queuedTasks.push(task);
     if (this.isRunning) {
@@ -22,6 +35,9 @@ export class QueueTaskRunner<T> {
   }
 }
 
+/**
+ * Task represents the task to run for the QueueTaskRunner.
+ */
 export class Task<T> {
   private constructor(
     private readonly func: () => Promise<T>,
@@ -31,6 +47,12 @@ export class Task<T> {
     private readonly ttlEpochMillisec?: number,
   ) {}
 
+  /**
+   * make makes a new instance of the Task.
+   *
+   * @param func a procedure to run
+   * @param ttlEpochMillisec TTL epoch milliseconds for the task
+   */
   static async make<T>(func: () => Promise<T>, ttlEpochMillisec?: number): Promise<Task<T>> {
     return await new Promise<Task<T>>(resolveTaskSetup => {
       let resultPromise: Promise<T>;
@@ -63,11 +85,17 @@ export class Task<T> {
     }
   }
 
+  /**
+   * getResult returns a Promise that represents the result of run this task.
+   */
   async getResult(): Promise<T> {
     return this.resultPromise;
   }
 }
 
+/**
+ * TaskTTLExceededError represents the error when the Task's TTL exceeds.
+ */
 export class TaskTTLExceededError extends Error {
   constructor(msg: string) {
     super(msg);
