@@ -1,5 +1,5 @@
-import { describe, expect, test } from '@jest/globals';
-import { QueueTaskRunner, Task, TaskTTLExceededError } from './index';
+import {describe, expect, test} from '@jest/globals';
+import {QueueTaskRunner, Task, TaskTTLExceededError} from './index';
 
 describe('QueueTaskRunner', () => {
   test('execute a single task (i.e. no queieing)', async () => {
@@ -7,7 +7,7 @@ describe('QueueTaskRunner', () => {
     const task = await Task.make<string>(async (): Promise<string> => {
       return 'foo';
     });
-    queueTaskRunner.execOrQueue(task);
+    queueTaskRunner.enqueue(task);
 
     const result = await task.getResult();
     expect(result).toBe('foo');
@@ -35,9 +35,9 @@ describe('QueueTaskRunner', () => {
       });
     });
 
-    queueTaskRunner.execOrQueue(task1);
-    queueTaskRunner.execOrQueue(task2);
-    queueTaskRunner.execOrQueue(task3);
+    queueTaskRunner.enqueue(task1);
+    queueTaskRunner.enqueue(task2);
+    queueTaskRunner.enqueue(task3);
     expect(await task1.getResult()).toBe(1);
     expect(await task2.getResult()).toBe(2);
     expect(await task3.getResult()).toBe(3);
@@ -61,9 +61,9 @@ describe('QueueTaskRunner', () => {
       });
     });
 
-    queueTaskRunner.execOrQueue(task4);
-    queueTaskRunner.execOrQueue(task5);
-    queueTaskRunner.execOrQueue(task6);
+    queueTaskRunner.enqueue(task4);
+    queueTaskRunner.enqueue(task5);
+    queueTaskRunner.enqueue(task6);
     expect(await task4.getResult()).toBe(4);
     expect(await task5.getResult()).toBe(5);
     expect(await task6.getResult()).toBe(6);
@@ -90,9 +90,9 @@ describe('QueueTaskRunner', () => {
       });
     });
 
-    queueTaskRunner.execOrQueue(task1);
-    queueTaskRunner.execOrQueue(task2);
-    queueTaskRunner.execOrQueue(task3);
+    queueTaskRunner.enqueue(task1);
+    queueTaskRunner.enqueue(task2);
+    queueTaskRunner.enqueue(task3);
     await expect(task1.getResult()).rejects.toThrowError('error: task1');
     await expect(task2.getResult()).rejects.toThrowError('error: task2');
     await expect(task3.getResult()).rejects.toThrowError('error: task3');
@@ -104,10 +104,34 @@ describe('QueueTaskRunner', () => {
       return 'foo';
     }, Date.now() - 1);
     // ~~~~~~~~~~~~~~ force expiration
-    queueTaskRunner.execOrQueue(task);
+    queueTaskRunner.enqueue(task);
 
     await expect(task.getResult()).rejects.toThrowError(
       new TaskTTLExceededError('the ttl of queued task has exceeded'),
     );
+  });
+
+  test('regression for the timing issue for `isRunning` flapping', async () => {
+    const queueTaskRunner = new QueueTaskRunner<number>();
+    let task = await Task.make<number>(async (): Promise<number> => {
+      return 0;
+    }); // dummy initial task value
+
+    let n = 0;
+    const incr = async (): Promise<number> => {
+      return ++n;
+    };
+
+    for (let i = 0; i < 100000; i++) {
+      // queue tasks simultaneously
+      queueTaskRunner.enqueue(await Task.make<number>(incr));
+      queueTaskRunner.enqueue(await Task.make<number>(incr));
+      queueTaskRunner.enqueue(await Task.make<number>(incr));
+      queueTaskRunner.enqueue(await Task.make<number>(incr));
+
+      task = await Task.make<number>(incr);
+      queueTaskRunner.enqueue(task);
+    }
+    expect(await task.getResult()).toBe(500000);
   });
 });

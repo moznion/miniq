@@ -2,23 +2,22 @@ export class QueueTaskRunner<T> {
   private queuedTasks: Task<T>[] = [];
   private isRunning = false;
 
-  execOrQueue(task: Task<T>): void {
-    if (this.queuedTasks.length > 0 || this.isRunning) {
-      this.queuedTasks.push(task);
+  enqueue(task: Task<T>): void {
+    this.queuedTasks.push(task);
+    if (this.isRunning) {
       return;
     }
 
     this.isRunning = true;
     (async () => {
-      await task.do();
       for (;;) {
         const nextTask = this.queuedTasks.shift();
         if (nextTask === undefined) {
-          break;
+          this.isRunning = false;
+          return;
         }
         await nextTask.do();
       }
-      this.isRunning = false;
     })();
   }
 }
