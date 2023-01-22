@@ -1,10 +1,6 @@
 # miniq [![.github/workflows/check.yml](https://github.com/moznion/miniq/actions/workflows/check.yml/badge.svg)](https://github.com/moznion/miniq/actions/workflows/check.yml) [![codecov](https://codecov.io/gh/moznion/miniq/branch/main/graph/badge.svg?token=IXK4KN1VR9)](https://codecov.io/gh/moznion/miniq)
 
-A minimal in-process queue system for TypeScript/JavaScript.
-
-This supports TTL for a task.
-
-TBD TBD TBD
+A minimal in-process queue system for TypeScript/JavaScript that supports TTL mechanism.
 
 ## Synopsis
 
@@ -30,14 +26,39 @@ const task3 = await Task.make<number>(async (): Promise<number> => {
   });
 });
 
-queueTaskRunner.execOrQueue(task1); // runner runs task1, and the task takes 500ms
-queueTaskRunner.execOrQueue(task2); // runner queues task2 and defer it after task1
-queueTaskRunner.execOrQueue(task3); // runner queues task3 and defer it after task2
+queueTaskRunner.enqueue(task1); // runner runs task1, and the task takes 500ms
+queueTaskRunner.enqueue(task2); // runner queues task2 and defer it after task1
+queueTaskRunner.enqueue(task3); // runner queues task3 and defer it after task2
 
 console.log(await task1.getResult()); // => 1
 console.log(await task2.getResult()); // => 2
 console.log(await task3.getResult()); // => 3
 ```
+
+## Description
+
+`QueueTaskRunner#enqueue(task: Task<T>)` receives a task and appends that task to the queue and runs the tasks in a queue
+from the beginning of the queue.
+
+`Task<T>` represents the task that you wanted to do according to the FIFO, and the task runner executes the enqueued
+task's `async do(): Promise<void>`.
+The point is this `do()` returns the `Promise<void>` so the client code cannot get the result of the actual procedure,
+but you can use `async Task#getResult(): Promise<T>` to take that.
+So the basic usage should be enqueuing a task and waiting for the result by `await getResult()` for the task.
+
+### TTL
+
+You can give a task the TTL like:
+
+```
+const task = await Task.make<string>(async (): Promise<string> => {
+  return 'foo';
+}, Date.now() + 60000);
+// ~~~~~~~~~~~~~~~~~~ TTL that represents 60 secs from now
+```
+
+And a task that has the TTL has been enqueued and when the task runner takes the task to run, if the TTL exceeds
+the current timestamp at that moment, it doesn't run that task and it rejects the task with `TaskTTLExceededError`.
 
 ## LISENCE
 
