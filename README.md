@@ -1,4 +1,4 @@
-# miniq
+# miniq [![.github/workflows/check.yml](https://github.com/moznion/miniq/actions/workflows/check.yml/badge.svg)](https://github.com/moznion/miniq/actions/workflows/check.yml) [![codecov](https://codecov.io/gh/moznion/miniq/branch/main/graph/badge.svg?token=IXK4KN1VR9)](https://codecov.io/gh/moznion/miniq)
 
 A minimal in-process queue system for TypeScript/JavaScript.
 
