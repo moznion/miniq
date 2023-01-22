@@ -1,4 +1,4 @@
-# miniq [![.github/workflows/check.yml](https://github.com/moznion/miniq/actions/workflows/check.yml/badge.svg)](https://github.com/moznion/miniq/actions/workflows/check.yml) [![codecov](https://codecov.io/gh/moznion/miniq/branch/main/graph/badge.svg?token=IXK4KN1VR9)](https://codecov.io/gh/moznion/miniq)
+# miniq [![.github/workflows/check.yml](https://github.com/moznion/miniq/actions/workflows/check.yml/badge.svg)](https://github.com/moznion/miniq/actions/workflows/check.yml) [![codecov](https://codecov.io/gh/moznion/miniq/branch/main/graph/badge.svg?token=IXK4KN1VR9)](https://codecov.io/gh/moznion/miniq) [![npm version](https://badge.fury.io/js/@moznion%2Fminiq.svg)](https://badge.fury.io/js/@moznion%2Fminiq)
 
 A minimal in-process queue system for TypeScript/JavaScript that supports TTL mechanism.
 
@@ -52,7 +52,7 @@ Please see also [typedoc](https://moznion.github.io/miniq/).
 
 You can give a task the TTL like:
 
-```
+```ts
 const task = await Task.make<string>(async (): Promise<string> => {
   return 'foo';
 }, Date.now() + 60000);
